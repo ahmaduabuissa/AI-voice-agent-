@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI Voice Agent Simulator: Alalawneh Exchange</title>
+<style>
+:root{--bg:#f3f6f9;--card:#fff;--ink:#12233a;--mute:#5b6b7e;--line:#d5dde6;--acc:#0e8f83;--ok:#1f8a5b;--warn:#b7791f;--bad:#c0392b;--okbg:#e4f4ec;--warnbg:#fdf1d8;--badbg:#fbe5e2;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a26;--card:#15263a;--ink:#e6edf5;--mute:#9db0c4;--line:#2a3f57;--acc:#3cc3b5;--ok:#4cc38a;--warn:#e2ad4b;--bad:#f0746a;--okbg:#14352b;--warnbg:#3a2f14;--badbg:#3b1f1d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0d1a26;--card:#15263a;--ink:#e6edf5;--mute:#9db0c4;--line:#2a3f57;--acc:#3cc3b5;--ok:#4cc38a;--warn:#e2ad4b;--bad:#f0746a;--okbg:#14352b;--warnbg:#3a2f14;--badbg:#3b1f1d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.2px}
+.sub{color:var(--mute);font-size:13px;margin:0}
+button,select,textarea,input{font:inherit;color:var(--ink)}
+button{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-top:12px}
+h2{font-size:15px;margin:0 0 10px}
+.scn{display:flex;flex-wrap:wrap;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.ctl{margin-bottom:12px}
+.ctl label{display:flex;justify-content:space-between;font-size:13px;color:var(--mute)}
+.ctl b{color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--acc)}
+select{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px}
+.kpi small{color:var(--mute);display:block}
+.kpi strong{font-size:22px}
+.kpi.ok{background:var(--okbg)}.kpi.warn{background:var(--warnbg)}.kpi.bad{background:var(--badbg)}
+.kpi.ok strong{color:var(--ok)}.kpi.warn strong{color:var(--warn)}.kpi.bad strong{color:var(--bad)}
+.view{border-radius:8px;padding:12px;border:1px solid var(--line)}
+.view.ok{background:var(--okbg)}.view.warn{background:var(--warnbg)}.view.bad{background:var(--badbg)}
+.view h3{margin:0 0 4px;font-size:14px;color:var(--mute);font-weight:600}
+.view .st{font-size:18px;font-weight:700}
+.view.ok .st{color:var(--ok)}.view.warn .st{color:var(--warn)}.view.bad .st{color:var(--bad)}
+.view p{margin:4px 0 0;font-size:13px}
+.rec{font-size:15px;margin:12px 0 0}
+svg{width:100%;height:auto;display:block}
+textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.note{color:var(--mute);font-size:12px;margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div>
+<h1>AI voice agent simulator</h1>
+<p class="sub">Alalawneh Exchange call center | Ahmad Abu Issa, ID 20258190</p>
+</div>
+<button id="theme" aria-label="Toggle light or dark mode">Dark mode</button>
+</header>
+
+<div class="card">
+<h2>Scenarios</h2>
+<div class="scn" id="scn"></div>
+<p class="note" id="scnNote">Pick a scenario, then change any setting below.</p>
+</div>
+
+<div class="grid">
+<div class="card">
+<h2>Settings you control</h2>
+<div class="ctl"><label>Calls per hour <b id="v_calls"></b></label><input type="range" id="calls" min="50" max="500" step="10"></div>
+<div class="ctl"><label>Calls the AI resolves alone <b id="v_res"></b></label><input type="range" id="res" min="0" max="95" step="5"></div>
+<div class="ctl"><label>Human agents on shift <b id="v_agents"></b></label><input type="range" id="agents" min="0" max="30" step="1"></div>
+<div class="ctl"><label>AI attempts before handoff to a human <b id="v_thr"></b></label><input type="range" id="thr" min="1" max="5" step="1"></div>
+<div class="ctl"><label>Customer data protection</label>
+<select id="prot"><option value="basic">Basic: vendor stores recordings abroad</option><option value="standard">Standard: vendor storage with contract limits</option><option value="strong">Strong: local hosting, audit rights</option></select></div>
+</div>
+
+<div class="card">
+<h2>System status</h2>
+<div class="kpis" id="kpis"></div>
+<p class="note">Each agent handles about 12 human calls per hour. Costs are in JD per hour.</p>
+</div>
+</div>
+
+<div class="grid">
+<div class="view" id="mgmt"></div>
+<div class="view" id="gov"></div>
+</div>
+<p class="rec card" id="rec"></p>
+
+<div class="card">
+<h2>Wait time as call volume grows</h2>
+<svg id="chart" viewBox="0 0 320 130" role="img" aria-label="Wait time versus calls per hour"></svg>
+<p class="note">The dot is your current setting. Past 100% agent utilization the wait climbs fast.</p>
+</div>
+
+<div class="card">
+<h2>Import and export data</h2>
+<textarea id="csv" aria-label="CSV data" spellcheck="false"></textarea>
+<div class="row">
+<button id="exp">Export results to CSV</button>
+<button id="imp">Load settings from CSV</button>
+<input type="file" id="file" accept=".csv,text/csv,.txt">
+</div>
+<p class="note" id="msg">Export fills the box and copies it. Edit the values or choose a CSV file, then load it.</p>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const SC={
+ 'Normal day':{calls:200,res:70,agents:8,thr:2,prot:'standard',t:'A typical weekday.'},
+ 'Eid remittance peak':{calls:450,res:70,agents:8,thr:2,prot:'standard',t:'Holiday rush: many more calls, same staff.'},
+ 'AI outage':{calls:200,res:0,agents:8,thr:2,prot:'standard',t:'The AI is down, so every call needs a person.'},
+ 'Strict data rules':{calls:200,res:70,agents:8,thr:2,prot:'strong',t:'Regulator asks for local hosting and audit rights.'}
+};
+const KEYS=['calls','res','agents','thr'];
+let P={...SC['Normal day']};
+const PROT={basic:{c:0,L:3},standard:{c:10,L:2},strong:{c:25,L:1}};
+function model(p){
+ const ai=p.calls*p.res/100, un=p.calls-ai, share=Math.min(.6,.1*p.thr);
+ const stuck=un*share, hum=un-stuck, cap=p.agents*12;
+ const util=cap?hum/cap:(hum>0?9:0);
+ let wait=util<1?1+6*util*util:7+(util-1)*30; if(!cap&&hum>0)wait=60; wait=Math.min(60,wait);
+ return {util,wait,stuckPct:stuck/p.calls*100,cost:p.agents*6+ai*.2+PROT[p.prot].c,score:PROT[p.prot].L*3};
+}
+const lvl=(v,a,b)=>v<=a?'ok':v<=b?'warn':'bad';
+function render(){
+ KEYS.forEach(k=>{$(k).value=P[k];$('v_'+k).textContent=P[k]+(k==='res'?'%':'')});
+ $('prot').value=P.prot;
+ const m=model(P);
+ const k=[['Wait for a human',m.wait.toFixed(1)+' min',lvl(m.wait,3,5)],['Customers stuck with AI',m.stuckPct.toFixed(1)+'%',lvl(m.stuckPct,6,10)],['Agent utilization',Math.round(m.util*100)+'%',lvl(m.util,.85,1)],['Cost per hour',m.cost.toFixed(0)+' JD','ok'],['Privacy risk score',m.score+' / 9',m.score>=6?'bad':m.score>=4?'warn':'ok']];
+ $('kpis').innerHTML=k.map(x=>`<div class="kpi ${x[2]}"><small>${x[0]}</small><strong>${x[1]}</strong></div>`).join('');
+ const opsBad=m.wait>5||m.stuckPct>10||m.util>1, opsWarn=m.wait>3||m.stuckPct>6||m.util>.85;
+ const mg=opsBad?['bad','Needs a fix','Too many callers wait or get stuck. Management can fix this: add agents or lower the AI attempts before handoff.']:opsWarn?['warn','Watch closely','Service is near its limit. Management should monitor and prepare extra agents.']:['ok','On track','Service levels are healthy. Management can run this within its own budget and procedures.'];
+ const esc=P.prot!=='strong';
+ const gv=esc?['bad','Escalate','Customer data sits with an outside vendor. This is a legal and regulatory exposure and a cost versus control trade-off, so only the governing body can accept it.']:['ok','Within appetite','Local hosting and audit rights reduce the exposure. The governing body can approve with conditions.'];
+ $('mgmt').className='view '+mg[0];$('mgmt').innerHTML=`<h3>Management view: are we doing things right?</h3><div class="st">${mg[1]}</div><p>${mg[2]}</p>`;
+ $('gov').className='view '+gv[0];$('gov').innerHTML=`<h3>Governance view: are we doing the right things?</h3><div class="st">${gv[1]}</div><p>${gv[2]}</p>`;
+ $('rec').innerHTML='<b>Recommendation:</b> '+(esc?'Escalate the data protection risk to the governing body before launch. ':'')+(opsBad?'Revise staffing or handoff rules first.':opsWarn?'Proceed with close monitoring.':esc?'Operations are fine.':'Accept the adoption.');
+ chart(m);
+ document.querySelectorAll('#scn button').forEach(b=>b.classList.toggle('on',b.textContent===cur));
+}
+function chart(m){
+ let pts=[],mx=0;for(let c=50;c<=500;c+=10){pts.push([c,model({...P,calls:c}).wait])}
+ const X=c=>30+(c-50)/450*280,Y=w=>115-w/60*100;
+ const d=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+ let g='';[0,20,40,60].forEach(v=>g+=`<line x1="30" x2="310" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="26" y="${Y(v)+4}" text-anchor="end" font-size="9" fill="var(--mute)">${v}</text>`);
+ [100,200,300,400,500].forEach(v=>g+=`<text x="${X(v)}" y="127" text-anchor="middle" font-size="9" fill="var(--mute)">${v}</text>`);
+ $('chart').innerHTML=g+`<line x1="30" x2="310" y1="${Y(5)}" y2="${Y(5)}" stroke="var(--warn)" stroke-dasharray="4 3"/><path d="${d}" fill="none" stroke="var(--acc)" stroke-width="2"/><circle cx="${X(P.calls)}" cy="${Y(m.wait)}" r="5" fill="var(--bad)"/><text x="310" y="${Y(5)-3}" text-anchor="end" font-size="9" fill="var(--warn)">5 min limit</text>`;
+}
+let cur='Normal day';
+Object.keys(SC).forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>{cur=n;P={...SC[n]};$('scnNote').textContent=SC[n].t;render()};$('scn').appendChild(b)});
+KEYS.forEach(k=>$(k).oninput=e=>{P[k]=+e.target.value;cur='';render()});
+$('prot').onchange=e=>{P.prot=e.target.value;cur='';render()};
+function csvText(){const m=model(P);return 'calls,res,agents,thr,prot,wait_min,stuck_pct,utilization_pct,cost_jd_hr,privacy_score\n'+[P.calls,P.res,P.agents,P.thr,P.prot,m.wait.toFixed(1),m.stuckPct.toFixed(1),Math.round(m.util*100),m.cost.toFixed(0),m.score].join(',')}
+$('exp').onclick=()=>{const t=csvText();$('csv').value=t;let ok=false;try{navigator.clipboard.writeText(t).then(()=>{$('msg').textContent='Exported and copied to the clipboard.'},()=>{$('msg').textContent='Exported. Select the text above and copy it.'});ok=true}catch(e){}if(!ok)$('msg').textContent='Exported. Select the text above and copy it.'};
+function load(t){
+ const L=t.trim().split(/\r?\n/);if(L.length<2){$('msg').textContent='Add a header row and one data row.';return}
+ const h=L[0].split(',').map(s=>s.trim().toLowerCase()),v=L[1].split(',').map(s=>s.trim()),o={};h.forEach((k,i)=>o[k]=v[i]);
+ const n={calls:+o.calls,res:+o.res,agents:+o.agents,thr:+o.thr,prot:o.prot};
+ if([n.calls,n.res,n.agents,n.thr].some(x=>isNaN(x))||!PROT[n.prot]){$('msg').textContent='Could not read it. Needed columns: calls, res, agents, thr, prot (basic, standard or strong).';return}
+ n.calls=Math.min(500,Math.max(50,n.calls));n.res=Math.min(95,Math.max(0,n.res));n.agents=Math.min(30,Math.max(0,n.agents));n.thr=Math.min(5,Math.max(1,n.thr));
+ P=n;cur='';render();$('msg').textContent='Settings loaded from CSV.';
+}
+$('imp').onclick=()=>load($('csv').value);
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('csv').value=r.result;load(r.result)};r.readAsText(f)};
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('theme').textContent=t==='dark'?'Light mode':'Dark mode'}
+$('theme').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
+setTheme(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+render();
+</script>
+</body>
+</html>
