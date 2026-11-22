@@ -89,6 +89,14 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:8
 <p class="rec card" id="rec"></p>
 
 <div class="card">
+<h2>Auto simulation: a full 24-hour day</h2>
+<p class="note" style="margin:0 0 8px">Runs your current settings through a day with quiet nights and busy mornings. Change the settings and run it again to compare.</p>
+<div class="row"><button id="auto">Run 24-hour day</button><span id="clock" class="note"></span></div>
+<svg id="achart" viewBox="0 0 320 130" role="img" aria-label="Wait time by hour of the day"></svg>
+<p class="note" id="asum">Press the button to start. Bars show the wait time for each hour; red bars pass the 5-minute limit.</p>
+</div>
+
+<div class="card">
 <h2>Wait time as call volume grows</h2>
 <svg id="chart" viewBox="0 0 320 130" role="img" aria-label="Wait time versus calls per hour"></svg>
 <p class="note">The dot is your current setting. Past 100% agent utilization the wait climbs fast.</p>
@@ -165,6 +173,35 @@ function load(t){
 }
 $('imp').onclick=()=>load($('csv').value);
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('csv').value=r.result;load(r.result)};r.readAsText(f)};
+const PROF=[.2,.15,.1,.1,.15,.3,.6,.9,1.2,1.4,1.5,1.4,1.3,1.2,1.3,1.4,1.3,1.1,.9,.7,.5,.4,.3,.25];
+let timer=null,hist=[];
+function drawAuto(){
+ const X=i=>30+i*11.6,Y=w=>115-Math.min(w,60)/60*100;
+ let g='';[0,20,40,60].forEach(v=>g+=`<line x1="30" x2="310" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="26" y="${Y(v)+4}" text-anchor="end" font-size="9" fill="var(--mute)">${v}</text>`);
+ [0,6,12,18].forEach(h=>g+=`<text x="${X(h)+4}" y="127" text-anchor="middle" font-size="9" fill="var(--mute)">${String(h).padStart(2,'0')}:00</text>`);
+ g+=`<line x1="30" x2="310" y1="${Y(5)}" y2="${Y(5)}" stroke="var(--warn)" stroke-dasharray="4 3"/>`;
+ hist.forEach((r,i)=>g+=`<rect x="${X(i)}" y="${Y(r.w)}" width="9" height="${115-Y(r.w)}" fill="${r.w>5?'var(--bad)':r.w>3?'var(--warn)':'var(--acc)'}"/>`);
+ $('achart').innerHTML=g;
+ const r=hist[hist.length-1];
+ $('clock').textContent=r?`${String(r.h).padStart(2,'0')}:00 | ${r.c} calls | wait ${r.w.toFixed(1)} min | utilization ${Math.round(r.u*100)}%`:'';
+}
+function stopAuto(done){
+ clearInterval(timer);timer=null;$('auto').textContent='Run 24-hour day';
+ if(done&&hist.length){
+  const pk=hist.reduce((a,b)=>b.w>a.w?b:a),over=hist.filter(r=>r.w>5).length,tot=hist.reduce((s,r)=>s+r.cost,0),st=hist.reduce((s,r)=>s+r.s,0)/hist.length;
+  $('asum').innerHTML=`<b>Day summary:</b> peak wait ${pk.w.toFixed(1)} min at ${String(pk.h).padStart(2,'0')}:00, ${over} hour(s) above the 5-minute limit, on average ${st.toFixed(1)}% of customers stuck with the AI, total cost ${Math.round(tot)} JD. `+(over>0?'Management should add agents in the busy hours or change the handoff rule.':'Service stays within limits all day.');
+ }
+}
+$('auto').onclick=()=>{
+ if(timer){stopAuto(false);return}
+ hist=[];let h=0;$('auto').textContent='Stop';$('asum').textContent='Running...';
+ timer=setInterval(()=>{
+  if(h>=24){stopAuto(true);return}
+  const c=Math.round(P.calls*PROF[h]),m=model({...P,calls:c});
+  hist.push({h,c,w:m.wait,s:m.stuckPct,u:m.util,cost:m.cost});drawAuto();h++;
+ },400);
+};
+drawAuto();
 function setTheme(t){document.documentElement.setAttribute('data-theme',t);$('theme').textContent=t==='dark'?'Light mode':'Dark mode'}
 $('theme').onclick=()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
 setTheme(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
